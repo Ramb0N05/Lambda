@@ -66,13 +66,13 @@
             tlp_menu.Name = "tlp_menu";
             tlp_menu.RowCount = 1;
             tlp_menu.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tlp_menu.Size = new Size(704, 28);
+            tlp_menu.Size = new Size(759, 28);
             tlp_menu.TabIndex = 11;
             // 
             // btn_save
             // 
             btn_save.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            btn_save.Location = new Point(629, 0);
+            btn_save.Location = new Point(684, 0);
             btn_save.Margin = new Padding(0);
             btn_save.Name = "btn_save";
             btn_save.Size = new Size(75, 28);
@@ -84,7 +84,7 @@
             // btn_cancel
             // 
             btn_cancel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            btn_cancel.Location = new Point(554, 0);
+            btn_cancel.Location = new Point(609, 0);
             btn_cancel.Margin = new Padding(0);
             btn_cancel.Name = "btn_cancel";
             btn_cancel.Size = new Size(75, 28);
@@ -146,7 +146,7 @@
             tlp_main.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
             tlp_main.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
             tlp_main.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            tlp_main.Size = new Size(704, 277);
+            tlp_main.Size = new Size(759, 277);
             tlp_main.TabIndex = 7;
             // 
             // btn_moveUp
@@ -155,7 +155,7 @@
             btn_moveUp.Location = new Point(524, 0);
             btn_moveUp.Margin = new Padding(0);
             btn_moveUp.Name = "btn_moveUp";
-            btn_moveUp.Size = new Size(180, 27);
+            btn_moveUp.Size = new Size(235, 27);
             btn_moveUp.TabIndex = 1;
             btn_moveUp.Text = "Move up";
             btn_moveUp.UseVisualStyleBackColor = true;
@@ -167,7 +167,7 @@
             btn_moveDown.Location = new Point(524, 27);
             btn_moveDown.Margin = new Padding(0);
             btn_moveDown.Name = "btn_moveDown";
-            btn_moveDown.Size = new Size(180, 25);
+            btn_moveDown.Size = new Size(235, 25);
             btn_moveDown.TabIndex = 2;
             btn_moveDown.Text = "Move down";
             btn_moveDown.UseVisualStyleBackColor = true;
@@ -215,7 +215,7 @@
             btn_setDefault.Location = new Point(524, 109);
             btn_setDefault.Margin = new Padding(0);
             btn_setDefault.Name = "btn_setDefault";
-            btn_setDefault.Size = new Size(180, 28);
+            btn_setDefault.Size = new Size(235, 28);
             btn_setDefault.TabIndex = 6;
             btn_setDefault.Text = "Set default";
             btn_setDefault.UseVisualStyleBackColor = true;
@@ -344,7 +344,7 @@
             cb_server.AutoSize = true;
             cb_server.Location = new Point(527, 144);
             cb_server.Name = "cb_server";
-            cb_server.Size = new Size(174, 14);
+            cb_server.Size = new Size(229, 14);
             cb_server.TabIndex = 20;
             cb_server.UseVisualStyleBackColor = true;
             // 
@@ -365,7 +365,7 @@
             cb_useIPv4.AutoSize = true;
             cb_useIPv4.Location = new Point(527, 200);
             cb_useIPv4.Name = "cb_useIPv4";
-            cb_useIPv4.Size = new Size(174, 14);
+            cb_useIPv4.Size = new Size(229, 14);
             cb_useIPv4.TabIndex = 22;
             cb_useIPv4.UseVisualStyleBackColor = true;
             // 
@@ -380,7 +380,7 @@
             Controls.Add(tlp_menu);
             MinimumSize = new Size(635, 305);
             Name = "SettingsView";
-            Size = new Size(704, 305);
+            Size = new Size(759, 305);
             Title = "Settings";
             Load += SettingsView_Load;
             tlp_menu.ResumeLayout(false);

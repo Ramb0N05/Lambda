@@ -81,7 +81,7 @@ namespace Lambda.Views
         public Form? ViewForm { get; private set; }
         public FormWindowState WindowState { get; set; } = FormWindowState.Normal;
 
-        public void Initialize() {
+        public void InitializeView() {
             AcceptButtonClick += AcceptButtonClick_EventHandler;
             CancelButtonClick += CancelButtonClick_EventHandler;
             ViewClosing += ViewClosing_EventHandler;

@@ -12,7 +12,7 @@ namespace Lambda.Views {
 
             configManager = configurationManager;
 
-            Initialize();
+            InitializeView();
         }
 
         private async void SettingsView_Load(object sender, EventArgs e) {

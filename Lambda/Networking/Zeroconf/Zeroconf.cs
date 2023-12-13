@@ -53,7 +53,7 @@ namespace Lambda.Networking.Zeroconf {
             if (ServiceProfile != null)
                 UnadvertiseService();
 
-            ServiceProfile = new ServiceProfile(instanceName, ServiceName, port);
+            ServiceProfile = new ServiceProfile(instanceName, ServiceName, port, MulticastService.GetLinkLocalAddresses());
             ServiceDiscovery.Announce(ServiceProfile);
             ServiceDiscovery.Advertise(ServiceProfile);
         }

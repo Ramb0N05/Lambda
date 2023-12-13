@@ -6,6 +6,7 @@ using Lambda.Views;
 using Makaretu.Dns;
 using Newtonsoft.Json;
 using SharpRambo.ExtensionsLib;
+using System.ComponentModel;
 using System.Net;
 
 namespace Lambda
@@ -14,6 +15,7 @@ namespace Lambda
         private ConfigurationManager _configManager;
         private readonly LambdaServer? _server;
         private readonly Zeroconf _zeroconf;
+        private readonly BindingList<Game>? _gameList;
 
         public ImageList GameImages { get; private set; } = new ImageList();
         public ListViewGroup LVG_Local = new("Local");
@@ -23,6 +25,9 @@ namespace Lambda
             _configManager = Program.ConfigManager ?? throw new NullReferenceException(nameof(ConfigurationManager));
             _server = Program.Server;
             _zeroconf = Program.Zeroconf ?? throw new NullReferenceException(nameof(Zeroconf));
+            _gameList = _configManager.CurrentGameConfig.Games != null
+                ? new BindingList<Game>(_configManager.CurrentGameConfig.Games.Select(g => Game.FromModel(g)).ToList())
+                : [];
 
             InitializeComponent();
             GameImages.ImageSize = new Size(96, 96);
@@ -33,7 +38,7 @@ namespace Lambda
         private async void MainForm_Load(object sender, EventArgs e) {
             Application.DoEvents();
 
-            await initializeGames();
+            await loadGames();
 
             if (_server != null) {
                 _server.OnMessageReceived += server_onMessageReceived_EventHandler;
@@ -41,17 +46,17 @@ namespace Lambda
             }
         }
 
-        private async Task initializeGames() {
+        private async Task loadGames() {
             lv_games.Items.Clear();
 
-            if (_configManager.CurrentGameConfig.Games != null) {
-                await _configManager.CurrentGameConfig.Games.ForEachAsync(async game => {
+            if (_gameList != null) {
+                await _gameList.ForEachAsync(async game => {
                     if (!game.ImagePath.IsNull()) {
                         Image image = Image.FromFile(game.ImagePath);
                         GameImages.Images.Add(game.Identifier, image);
                     }
 
-                    ListViewItem lvi = new(game.Name, game.Identifier, LVG_Local) { Tag = game.Identifier };
+                    ListViewItem lvi = new(game.Name, game.Identifier, game.IsRemote ? LVG_Local : LVG_Remote) { Tag = game.Identifier };
                     lv_games.Items.Add(lvi);
 
                     await Task.CompletedTask;
@@ -63,26 +68,59 @@ namespace Lambda
             MessageBox.Show("Server received from '" + e.Message.SourceIdentifier + "': " + e.Message.Type.GetName() + Environment.NewLine
                 + e.Message.PayloadJSON);
 
-            switch (e.Message.Type) {
-                case LambdaMessageType.GetGames:
+            if (e.ChannelHandlerContext != null) {
+                switch (e.Message.Type) {
+                    case LambdaMessageType.GetGames:
+                        await e.ChannelHandlerContext.WriteAndFlushAsync(new LambdaMessage(
+                            LambdaMessageType.GameInfo,
+                            JsonConvert.SerializeObject(GameInformationModel.Create(_configManager.CurrentGameConfig.Games))
+                        ));
 
-                    break;
+                        break;
 
-                case LambdaMessageType.GetHost:
-                    if (e.ChannelHandlerContext != null) {
-                        await e.ChannelHandlerContext.WriteAsync(new LambdaMessage(
+                    case LambdaMessageType.GetHost:
+                        await e.ChannelHandlerContext.WriteAndFlushAsync(new LambdaMessage(
                             LambdaMessageType.HostInfo,
                             JsonConvert.SerializeObject(HostInformationModel.Create(Program.HostInformation))
                         ));
-                    }
 
-                    break;
+                        break;
+
+                    default:
+                        await e.ChannelHandlerContext.WriteAndFlushAsync(LambdaMessage.UnsupportedMessage);
+                        break;
+                }
             }
         }
 
-        private void client_onMessageReceived_EventHandler(object? sender, MessageReceivedEventArgs e) {
+        private async void client_onMessageReceived_EventHandler(object? sender, MessageReceivedEventArgs e) {
             MessageBox.Show("Client received from '" + e.Message.SourceIdentifier + "': " + e.Message.Type.GetName() + Environment.NewLine
                 + e.Message.PayloadJSON);
+
+            switch (e.Message.Type) {
+                case LambdaMessageType.GameInfo:
+                    GameInformationModel? gim = JsonConvert.DeserializeObject<GameInformationModel>(e.Message.PayloadJSON);
+
+                    if (gim != null && _gameList != null) {
+                        await gim.Games.ForEachAsync(async g => {
+                            if (!_gameList.Any(gi => gi.Identifier == g.Identifier))
+                                _gameList.Add(Game.FromModel(g));
+
+                            await Task.CompletedTask;
+                        });
+                    }
+
+                    await loadGames();
+                    break;
+
+                case LambdaMessageType.HostInfo:
+                    HostInformationModel? him = JsonConvert.DeserializeObject<HostInformationModel>(e.Message.PayloadJSON);
+
+                    break;
+
+                default:
+                    break;
+            }
         }
 
         private void btn_settings_Click(object sender, EventArgs e)
@@ -98,7 +136,7 @@ namespace Lambda
             using MulticastService mdns = new();
             mdns.Start();
             mdns.SendQuery(query);
-            await mdns.ResolveAsync(query);
+            _ = await mdns.ResolveAsync(query);
 
             foreach (ServiceInstance i in _zeroconf.ServiceInstances.ToArray()) {
                 try {
@@ -110,11 +148,12 @@ namespace Lambda
                     ipMsg += Environment.NewLine + Environment.NewLine + "Primary EndPoint:" + Environment.NewLine;
                     ipMsg += i.PrimaryEndPoint.ToString();
 
-                    MessageBox.Show(i.InstanceName + Environment.NewLine + ipMsg);
+                    //MessageBox.Show(i.InstanceName + Environment.NewLine + ipMsg);
 
                     LambdaClient c = new(i.PrimaryEndPoint);
+                    c.OnMessageReceived += client_onMessageReceived_EventHandler;
                     await c.Connect();
-                    await c.Write(new LambdaMessage(LambdaMessageType.GetHost, string.Empty));
+                    await c.Write(LambdaMessage.GetHostMessage);
                 } catch (Exception ex) {
                     MessageBox.Show(ex.Message);
                 }
@@ -128,6 +167,53 @@ namespace Lambda
 
         private async void MainForm_Shown(object sender, EventArgs e) {
 
+        }
+
+        private async void btn_import_Click(object sender, EventArgs e) {
+            InputBoxView inputBox = new("Import game", "Game directory:", true);
+            inputBox.ExtraButtonClick += inputGameImportDir_ExtraButtonClick;
+
+            if (inputBox.ShowDialog() == DialogResult.OK) {
+                string? path = inputBox.UserInput;
+
+                if (!path.IsNull() && Directory.Exists(path)) {
+                    ProgressView<Game> pv = new("Hashing files ...");
+
+                    pv.OnProgressFinished += progressView_OnProgressFinished;
+
+                    Game.OnCreateHashesProgressChanged += (sender, e) => {
+                        if (e.CurrentFileNumber == e.TotalFileCount && e.IsWritten) {
+                            pv.UpdateProgress(101, "Hashing complete.");
+                        } else {
+                            pv.UpdateProgress(
+                                e.TotalFileCount,
+                                e.IsWritten ? e.CurrentFileNumber : e.CurrentFileNumber - 1,
+                                "Hashing file (" + e.CurrentFileNumber + "/" + e.TotalFileCount + "):" + Environment.NewLine + e.CurrentFile.Name);
+                        }
+                    };
+
+                    Task<Game> gameTask = Game.Import("test", "Test", path);
+                    pv.ShowProgress(ref gameTask);
+                }
+            }
+        }
+
+        private void progressView_OnProgressFinished(object? sender, ProgressFinishedEventArgs<Game> e) {
+            Game? g = e.Result;
+
+            if (g?.IsExecuted == true) {
+
+            }
+        }
+
+        private void inputGameImportDir_ExtraButtonClick(object? sender, InputBoxView.ExtraButtonClickEventArgs e) {
+            FolderBrowserDialog fbd = new() {
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ShowNewFolderButton = true
+            };
+
+            if (fbd.ShowDialog() == DialogResult.OK)
+                e.InputBoxView.UpdateUserInput(fbd.SelectedPath);
         }
     }
 }

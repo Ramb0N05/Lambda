@@ -32,7 +32,7 @@ namespace Lambda.Views
                 tlp_main.SetCellPosition(btn_ok, okCell);
             }
 
-            Initialize();
+            InitializeView();
 
             DataReady += DataReady_EventHandler;
             ExtraButton.Click += (sender, e) => ExtraButtonClick?.Invoke(sender, new ExtraButtonClickEventArgs(this));

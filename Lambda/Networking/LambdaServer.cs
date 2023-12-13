@@ -2,11 +2,12 @@
 using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
+using System.Net;
 
 namespace Lambda.Networking {
     public class LambdaServer {
         private readonly ServerBootstrap _bootstrap = new();
-        private IChannel _bootstrapChannel;
+        private IChannel? _bootstrapChannel;
         private readonly MultithreadEventLoopGroup _bossGroup = new(1);  // accepts an incoming connection
         private readonly MultithreadEventLoopGroup _workerGroup = new(); // handles the traffic of the accepted connection once the boss accepts the connection and registers the accepted connection to the worker
 
@@ -15,12 +16,15 @@ namespace Lambda.Networking {
         public event EventHandler<ExceptionCaughtEventArgs>? OnExceptionCaught;
         public event EventHandler<MessageReceivedEventArgs>? OnMessageReceived;
 
+        public IPAddress? IP { get; }
         public ushort Port { get; }
 
-        public LambdaServer(ushort port) {
+        public LambdaServer(ushort port) : this(null, port) { }
+        public LambdaServer(IPAddress? ip, ushort port) {
             if (port == 0)
                 throw new ArgumentOutOfRangeException(nameof(port), port, "Port must be greater than zero!");
 
+            IP = ip ?? IPAddress.Any;
             Port = port;
             const LogLevel logLevel = LogLevel.INFO;
 
@@ -49,15 +53,19 @@ namespace Lambda.Networking {
         }
 
         public async Task Listen()
-            => _bootstrapChannel = await _bootstrap.BindAsync(Port);
+            => _bootstrapChannel = IP != null ? await _bootstrap.BindAsync(IP, Port) : await _bootstrap.BindAsync(Port);
 
         public async Task Close() {
+            if (_bootstrapChannel != null)
             await _bootstrapChannel.CloseAsync();
+
             await _bossGroup.ShutdownGracefullyAsync();
             await _workerGroup.ShutdownGracefullyAsync();
         }
 
-        public async Task Write(LambdaMessage message)
-            => await _bootstrapChannel.WriteAndFlushAsync(message);
+        public async Task Write(LambdaMessage message) {
+            if (_bootstrapChannel != null)
+                await _bootstrapChannel.WriteAndFlushAsync(message);
+        }
     }
 }

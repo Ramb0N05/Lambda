@@ -42,16 +42,7 @@ namespace Lambda.Networking {
             }
         }
 
-        private string fromBase64(string message) {
-            if (message.IsNull())
-                return string.Empty;
-
-            ReadOnlySpan<byte> b64Bytes = Encoding.UTF8.GetBytes(message);
-            Span<byte> bytes = [];
-
-            return Base64.DecodeFromUtf8(b64Bytes, bytes, out _, out _) == System.Buffers.OperationStatus.Done
-                ? Encoding.UTF8.GetString(bytes)
-                : string.Empty;
-        }
+        private string fromBase64(string message)
+            => !message.IsNull() ? Encoding.UTF8.GetString(System.Convert.FromBase64String(message)) : string.Empty;
     }
 }

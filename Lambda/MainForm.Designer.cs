@@ -40,6 +40,7 @@
             tpl_menu = new TableLayoutPanel();
             btn_settings = new Button();
             btn_refresh = new Button();
+            btn_import = new Button();
             tlp_main.SuspendLayout();
             tlp_game.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pb_image).BeginInit();
@@ -238,6 +239,7 @@
             tpl_menu.ColumnStyles.Add(new ColumnStyle());
             tpl_menu.Controls.Add(btn_settings, 2, 0);
             tpl_menu.Controls.Add(btn_refresh, 0, 0);
+            tpl_menu.Controls.Add(btn_import, 1, 0);
             tpl_menu.Dock = DockStyle.Fill;
             tpl_menu.Location = new Point(1, 1);
             tpl_menu.Margin = new Padding(0);
@@ -270,6 +272,18 @@
             btn_refresh.Text = "Refresh";
             btn_refresh.UseVisualStyleBackColor = true;
             btn_refresh.Click += btn_refresh_Click;
+            // 
+            // btn_import
+            // 
+            btn_import.Anchor = AnchorStyles.Top | AnchorStyles.Bottom;
+            btn_import.Location = new Point(437, 0);
+            btn_import.Margin = new Padding(0);
+            btn_import.Name = "btn_import";
+            btn_import.Size = new Size(75, 30);
+            btn_import.TabIndex = 3;
+            btn_import.Text = "Import";
+            btn_import.UseVisualStyleBackColor = true;
+            btn_import.Click += btn_import_Click;
             // 
             // MainForm
             // 
@@ -311,5 +325,6 @@
         private Label lbl_path;
         private TableLayoutPanel tpl_menu;
         private Button btn_refresh;
+        private Button btn_import;
     }
 }

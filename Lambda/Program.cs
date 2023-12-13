@@ -5,7 +5,7 @@ using Lambda.Networking.Zeroconf;
 namespace Lambda
 {
     internal static class Program {
-        public const string MDNS_SERVICE_NAME = "lambda";
+        public const string SERVICE_NAME = "lambda";
 
         public static ConfigurationManager? ConfigManager { get; private set; }
         public static string ConfigPath { get; } = Path.Combine(Application.StartupPath, "config");
@@ -19,7 +19,7 @@ namespace Lambda
         [STAThread]
         static async Task Main() {
             ConfigManager = await ConfigurationManager.Initialize(ConfigPath);
-            using Zeroconf z = new(MDNS_SERVICE_NAME);
+            using Zeroconf z = new(SERVICE_NAME);
             Zeroconf = z;
 
             if (ConfigManager.CurrentGeneralConfig.EnableServer) {

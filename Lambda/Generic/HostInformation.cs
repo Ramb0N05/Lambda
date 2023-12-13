@@ -2,6 +2,7 @@
 using System.Management;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Reflection;
 
 namespace Lambda.Generic {
     public class HostInformation {
@@ -42,6 +43,8 @@ namespace Lambda.Generic {
             return computerName;
         }
 
+        public static UnicastIPAddressInformation? GetLocalIP() => GetLocalIP(AddressFamily.InterNetwork, 0);
+        public static UnicastIPAddressInformation? GetLocalIP(AddressFamily ipAddressFamily) => GetLocalIP(ipAddressFamily, 0);
         public static UnicastIPAddressInformation? GetLocalIP(AddressFamily ipAddressFamily, int nicIndex) {
             NetworkInterface[] nics = [.. NetworkInterface.GetAllNetworkInterfaces().Where(
                 nic => nic.OperationalStatus == OperationalStatus.Up
@@ -98,6 +101,6 @@ namespace Lambda.Generic {
         }
 
         public static Version GetSoftwareVersion()
-            => new(Application.ProductVersion);
+            => Assembly.GetExecutingAssembly().GetName().Version ?? Version.Parse("1.0.0.0");
     }
 }
