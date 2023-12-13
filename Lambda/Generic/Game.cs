@@ -1,14 +1,12 @@
-﻿using Lambda.Models;
+﻿using Lambda.Events;
+using Lambda.Models;
 using Newtonsoft.Json;
 using SharpRambo.ExtensionsLib;
-using System.CodeDom;
 using System.Diagnostics;
 using System.Net;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Web;
 
 namespace Lambda.Generic {
+
     public enum ValidationResult {
         Indeterminable = -2,
         Invalid = -1,
@@ -22,11 +20,11 @@ namespace Lambda.Generic {
     }
 
     [JsonObject(MemberSerialization.OptIn)]
-    public class ValidationFile : IEquatable<ValidationFile> {
+    public sealed class ValidationFile : IEquatable<ValidationFile> {
         public static ValidationFile Empty { get; } = new();
         public static ValidationFile Error { get; } = new() { Filename = "<ERR>", Hash = "<ERR>" };
 
-        public FileInfo File { get; private set; }
+        public FileInfo? File { get; }
 
         [JsonProperty("path", Required = Required.Always)]
         public string Filename { get; set; } = string.Empty;
@@ -34,37 +32,29 @@ namespace Lambda.Generic {
         [JsonProperty("hash", Required = Required.Always)]
         public string Hash { get; set; } = string.Empty;
 
-        public static async Task<ValidationFile> Get(FileInfo validationFile) {
-            if (!validationFile.Exists)
-                return Empty;
-
-            string data = await System.IO.File.ReadAllTextAsync(validationFile.FullName, Encoding.UTF8);
-
-            if (data.IsNull() || !data.Contains(Environment.NewLine))
-                return Error;
-
-            string[] val = data.Split(Environment.NewLine);
-
-            return val.Length < 2
-                ? Error :
-                new() { File = validationFile, Filename = val[0], Hash = val[1] };
-        }
-
         public bool Equals(ValidationFile? obj)
             => obj != null && File == obj.File && Filename == obj.Filename && Hash == obj.Hash;
+
+        public override bool Equals(object? obj)
+            => Equals(obj as ValidationFile);
+
+        public override int GetHashCode()
+            => new int[File?.GetHashCode() ?? 0.GetHashCode(), Filename.GetHashCode(), Hash.GetHashCode()].GetHashCode();
     }
 
     public class Game : GameModel {
         public const string DEFAULT_VALIDATION_FILE = "_validate.lambda";
 
         public static event EventHandler<FileProgressChangedEventArgs>? OnCreateHashesProgressChanged;
+
         public event EventHandler<FileProgressChangedEventArgs>? OnValidationProgressChanged;
 
         #region Properties
-        public IPEndPoint? RemoteLocation { get; private set; }
-        #endregion
+        public IPEndPoint? RemoteLocation { get; }
+        #endregion Properties
 
         #region Construct
+
         public Game(string identifier, string name, string location) {
             Identifier = identifier;
             Name = name;
@@ -73,9 +63,11 @@ namespace Lambda.Generic {
             if (!IsRemote && !checkLocation())
                 throw new DirectoryNotFoundException("Directory '" + Location + "' could not be located!");
         }
-        #endregion
+
+        #endregion Construct
 
         #region Methods
+
         private static async Task createHashes(DirectoryInfo location) {
             FileInfo hashFile = new(Path.Combine(location.FullName, DEFAULT_VALIDATION_FILE));
 
@@ -91,7 +83,7 @@ namespace Lambda.Generic {
             foreach (FileInfo f in files) {
                 if (f.Name is not "." or ".." && f.FullName != hashFile.FullName) {
                     currentFileNum++;
-                    OnCreateHashesProgressChanged?.Invoke(typeof(Game), new FileProgressChangedEventArgs(f, currentFileNum, fileCount, false));
+                    OnCreateHashesProgressChanged?.Invoke(null, new FileProgressChangedEventArgs(f, currentFileNum, fileCount, false));
 
                     string relPath = Path.GetRelativePath(location.FullName, f.FullName);
                     hashFiles.Add(new ValidationFile() {
@@ -99,17 +91,17 @@ namespace Lambda.Generic {
                         Hash = await Hashing.ComputeSha512HashFromFile(f)
                     });
 
-                    OnCreateHashesProgressChanged?.Invoke(typeof(Game), new FileProgressChangedEventArgs(f, currentFileNum, fileCount, true));
+                    OnCreateHashesProgressChanged?.Invoke(null, new FileProgressChangedEventArgs(f, currentFileNum, fileCount, true));
                 }
             }
 
-            OnCreateHashesProgressChanged?.Invoke(typeof(Game), new FileProgressChangedEventArgs(hashFile, fileCount, fileCount, false));
+            OnCreateHashesProgressChanged?.Invoke(null, new FileProgressChangedEventArgs(hashFile, fileCount, fileCount, false));
             await File.WriteAllTextAsync(hashFile.FullName, JsonConvert.SerializeObject(hashFiles, Formatting.Indented));
-            OnCreateHashesProgressChanged?.Invoke(typeof(Game), new FileProgressChangedEventArgs(hashFile, fileCount, fileCount, true));
+            OnCreateHashesProgressChanged?.Invoke(null, new FileProgressChangedEventArgs(hashFile, fileCount, fileCount, true));
         }
 
-        private async Task executeCommands(IEnumerable<CommandModel> commands, string workingDirectory, Action<Process> callback) {
-            await commands.ForEachAsync(async cmd => {
+        private static async Task executeCommands(IEnumerable<CommandModel> commands, string workingDirectory, Action<Process> callback)
+            => await commands.ForEachAsync(async cmd => {
                 Process p = new() {
                     EnableRaisingEvents = true,
                     StartInfo = await cmd.ToProcessStartInfo(),
@@ -126,7 +118,6 @@ namespace Lambda.Generic {
 
                 await Task.CompletedTask;
             });
-        }
 
         private async Task<List<FileValidation>> validate(FileInfo hashFile) {
             List<FileValidation> fileValidationList = [];
@@ -219,6 +210,7 @@ namespace Lambda.Generic {
                 IsStandalone = model.IsStandalone,
                 PrepareCommands = model.PrepareCommands
             };
-        #endregion
+
+        #endregion Methods
     }
 }

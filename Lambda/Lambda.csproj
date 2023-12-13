@@ -13,7 +13,7 @@
     <Authors>RamboNo5</Authors>
     <Company>$(Authors)</Company>
     <NeutralLanguage>en</NeutralLanguage>
-    <AssemblyVersion>1.0.0.125</AssemblyVersion>
+    <AssemblyVersion>1.0.0.130</AssemblyVersion>
     <FileVersion>$(AssemblyVersion)</FileVersion>
     <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
@@ -31,6 +31,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Properties\**" />
+    <EmbeddedResource Remove="Properties\**" />
+    <None Remove="Properties\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DotNetty.Common" Version="0.7.5" />
     <PackageReference Include="DotNetty.Handlers" Version="0.7.5" />
     <PackageReference Include="DotNetty.Transport" Version="0.7.5" />
@@ -38,10 +48,6 @@
     <PackageReference Include="Makaretu.Dns.Multicast" Version="0.27.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="System.Management" Version="8.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Properties\" />
   </ItemGroup>
 
 </Project>

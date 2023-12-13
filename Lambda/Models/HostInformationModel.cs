@@ -2,8 +2,10 @@
 using Newtonsoft.Json;
 
 namespace Lambda.Models {
+
     [JsonObject(MemberSerialization.OptIn)]
     public class HostInformationModel {
+
         [JsonProperty("description", Required = Required.AllowNull)]
         public string? Description { get; set; }
 
@@ -16,6 +18,19 @@ namespace Lambda.Models {
         [JsonProperty("softwareVersion", Required = Required.Always)]
         public Version SoftwareVersion { get; set; }
 
+        #region JSON Constructor
+
+#pragma warning disable CS8618
+
+        public HostInformationModel() {
+        }
+
+#pragma warning restore CS8618
+
+        #endregion JSON Constructor
+
+        #region Initializers
+
         public static HostInformationModel Create(HostInformation hostInfo)
             => new() {
                 Description = hostInfo.Description,
@@ -23,5 +38,7 @@ namespace Lambda.Models {
                 Name = hostInfo.Name,
                 SoftwareVersion = hostInfo.SoftwareVersion,
             };
+
+        #endregion Initializers
     }
 }

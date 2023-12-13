@@ -1,16 +1,17 @@
 using Lambda.Generic;
 using Lambda.Models;
 using Lambda.Networking;
+using Lambda.Networking.Events;
 using Lambda.Networking.Zeroconf;
 using Lambda.Views;
 using Makaretu.Dns;
 using Newtonsoft.Json;
 using SharpRambo.ExtensionsLib;
 using System.ComponentModel;
-using System.Net;
 
 namespace Lambda
 {
+
     public partial class MainForm : Form {
         private ConfigurationManager _configManager;
         private readonly LambdaServer? _server;
@@ -18,8 +19,8 @@ namespace Lambda
         private readonly BindingList<Game>? _gameList;
 
         public ImageList GameImages { get; private set; } = new ImageList();
-        public ListViewGroup LVG_Local = new("Local");
-        public ListViewGroup LVG_Remote = new("Remote");
+        public ListViewGroup LocalListViewGroup { get; } = new("Local");
+        public ListViewGroup RemoteListViewGroup { get; } = new("Remote");
 
         public MainForm() {
             _configManager = Program.ConfigManager ?? throw new NullReferenceException(nameof(ConfigurationManager));
@@ -31,11 +32,11 @@ namespace Lambda
 
             InitializeComponent();
             GameImages.ImageSize = new Size(96, 96);
-            lv_games.Groups.AddRange(new[] { LVG_Local, LVG_Remote });
+            lv_games.Groups.AddRange(new[] { LocalListViewGroup, RemoteListViewGroup });
             lv_games.LargeImageList = GameImages;
         }
 
-        private async void MainForm_Load(object sender, EventArgs e) {
+        private async void mainForm_Load(object sender, EventArgs e) {
             Application.DoEvents();
 
             await loadGames();
@@ -56,7 +57,7 @@ namespace Lambda
                         GameImages.Images.Add(game.Identifier, image);
                     }
 
-                    ListViewItem lvi = new(game.Name, game.Identifier, game.IsRemote ? LVG_Local : LVG_Remote) { Tag = game.Identifier };
+                    ListViewItem lvi = new(game.Name, game.Identifier, game.IsRemote ? LocalListViewGroup : RemoteListViewGroup) { Tag = game.Identifier };
                     lv_games.Items.Add(lvi);
 
                     await Task.CompletedTask;
@@ -127,9 +128,6 @@ namespace Lambda
             => new SettingsView(ref _configManager).ShowDialog();
 
         private async void btn_refresh_Click(object sender, EventArgs e) {
-            /*LambdaMessage msg = new(LambdaMessageType.HostInfo, string.Empty);
-            await Client.Write(msg);*/
-
             Makaretu.Dns.Message query = new();
             query.Questions.Add(new Question { Name = _zeroconf.ServiceFQDN, Type = DnsType.ANY });
 
@@ -140,16 +138,6 @@ namespace Lambda
 
             foreach (ServiceInstance i in _zeroconf.ServiceInstances.ToArray()) {
                 try {
-                    string ipMsg = "All EndPoints:" + Environment.NewLine;
-
-                    foreach (IPEndPoint ep in i.IPEndPoints)
-                        ipMsg += ep + "; ";
-
-                    ipMsg += Environment.NewLine + Environment.NewLine + "Primary EndPoint:" + Environment.NewLine;
-                    ipMsg += i.PrimaryEndPoint.ToString();
-
-                    //MessageBox.Show(i.InstanceName + Environment.NewLine + ipMsg);
-
                     LambdaClient c = new(i.PrimaryEndPoint);
                     c.OnMessageReceived += client_onMessageReceived_EventHandler;
                     await c.Connect();
@@ -160,16 +148,12 @@ namespace Lambda
             }
         }
 
-        private async void MainForm_FormClosing(object sender, FormClosingEventArgs e) {
+        private async void mainForm_FormClosing(object sender, FormClosingEventArgs e) {
             if (_server != null)
                 await _server.Close();
         }
 
-        private async void MainForm_Shown(object sender, EventArgs e) {
-
-        }
-
-        private async void btn_import_Click(object sender, EventArgs e) {
+        private void btn_import_Click(object sender, EventArgs e) {
             InputBoxView inputBox = new("Import game", "Game directory:", true);
             inputBox.ExtraButtonClick += inputGameImportDir_ExtraButtonClick;
 
@@ -200,10 +184,6 @@ namespace Lambda
 
         private void progressView_OnProgressFinished(object? sender, ProgressFinishedEventArgs<Game> e) {
             Game? g = e.Result;
-
-            if (g?.IsExecuted == true) {
-
-            }
         }
 
         private void inputGameImportDir_ExtraButtonClick(object? sender, InputBoxView.ExtraButtonClickEventArgs e) {

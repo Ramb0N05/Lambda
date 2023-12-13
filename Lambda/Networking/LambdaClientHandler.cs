@@ -1,7 +1,9 @@
 ﻿using DotNetty.Common.Internal.Logging;
 using DotNetty.Transport.Channels;
+using Lambda.Networking.Events;
 
-namespace Lambda.Networking {
+namespace Lambda.Networking
+{
     public class LambdaClientHandler : SimpleChannelInboundHandler<LambdaMessage> {
         static readonly IInternalLogger logger = InternalLoggerFactory.GetInstance<LambdaServerHandler>();
 

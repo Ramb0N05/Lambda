@@ -294,9 +294,8 @@
             Name = "MainForm";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Lambda";
-            FormClosing += MainForm_FormClosing;
-            Load += MainForm_Load;
-            Shown += MainForm_Shown;
+            FormClosing += mainForm_FormClosing;
+            Load += mainForm_Load;
             tlp_main.ResumeLayout(false);
             tlp_game.ResumeLayout(false);
             tlp_game.PerformLayout();

@@ -3,11 +3,17 @@ using System.Net;
 using System.Net.Sockets;
 
 namespace Lambda.Networking {
+
     public static class Extensions {
+
+        #region IPAddress Extensions
+
         public static bool IsInSubnet(this IPAddress address, string subnetMask) {
+            // See https://stackoverflow.com/a/56461160
+
             int slashIdx = subnetMask.IndexOf('/');
             if (slashIdx == -1) // We only handle netmasks in format "IP/PrefixLength".
-                throw new NotSupportedException("Only SubNetMasks with a given prefix length are supported.");
+                throw new NotSupportedException("Only Subnetmasks with a given prefix length are supported.");
 
             // First parse the address of the netmask before the prefix length.
             IPAddress maskAddress = IPAddress.Parse(subnetMask.AsSpan(0, slashIdx));
@@ -16,7 +22,7 @@ namespace Lambda.Networking {
                 return false;
 
             // Now find out how long the prefix is.
-            int maskLength = int.Parse(subnetMask.Substring(slashIdx + 1));
+            int maskLength = int.Parse(subnetMask[(slashIdx + 1)..]);
 
             if (maskLength == 0)
                 return true;
@@ -34,18 +40,19 @@ namespace Lambda.Networking {
                 // Get the mask/network address as unsigned integer.
                 uint mask = uint.MaxValue << (32 - maskLength);
 
-                // https://stackoverflow.com/a/1499284/3085985
-                // Bitwise AND mask and MaskAddress, this should be the same as mask and IpAddress
-                // as the end of the mask is 0000 which leads to both addresses to end with 0000
-                // and to start with the prefix.
+                // https://stackoverflow.com/a/1499284/3085985 Bitwise AND mask and MaskAddress,
+                // this should be the same as mask and IpAddress as the end of the mask is 0000
+                // which leads to both addresses to end with 0000 and to start with the prefix.
                 return (maskAddressBits & mask) == (ipAddressBits & mask);
             }
 
             if (maskAddress.AddressFamily == AddressFamily.InterNetworkV6) {
-                // Convert the mask address to a BitArray. Reverse the BitArray to compare the bits of each byte in the right order.
+                // Convert the mask address to a BitArray. Reverse the BitArray to compare the bits
+                // of each byte in the right order.
                 BitArray maskAddressBits = new(maskAddress.GetAddressBytes().Reverse().ToArray());
 
-                // And convert the IpAddress to a BitArray. Reverse the BitArray to compare the bits of each byte in the right order.
+                // And convert the IpAddress to a BitArray. Reverse the BitArray to compare the bits
+                // of each byte in the right order.
                 BitArray ipAddressBits = new(address.GetAddressBytes().Reverse().ToArray());
                 int ipAddressLength = ipAddressBits.Length;
 
@@ -63,5 +70,7 @@ namespace Lambda.Networking {
 
             throw new NotSupportedException("Only InterNetworkV6 or InterNetwork address families are supported.");
         }
+
+        #endregion IPAddress Extensions
     }
 }

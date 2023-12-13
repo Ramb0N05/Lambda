@@ -2,9 +2,11 @@
 using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
+using Lambda.Networking.Events;
 using System.Net;
 
-namespace Lambda.Networking {
+namespace Lambda.Networking
+{
     public class LambdaServer {
         private readonly ServerBootstrap _bootstrap = new();
         private IChannel? _bootstrapChannel;

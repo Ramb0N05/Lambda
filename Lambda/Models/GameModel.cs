@@ -1,17 +1,18 @@
 ﻿using Newtonsoft.Json;
 using System.ComponentModel;
-using System.Text.Json.Serialization;
 
-namespace Lambda.Models
-{
+namespace Lambda.Models {
+
     [JsonObject(MemberSerialization.OptIn)]
     public class GameModel {
+
         #region Basic
+
         [JsonProperty("identifier", Required = Required.Always)]
         public string Identifier { get; set; }
 
         [JsonProperty("imagePath", Required = Required.Default)]
-        public string? ImagePath { get;set; }
+        public string? ImagePath { get; set; }
 
         [JsonProperty("installLocation", Required = Required.Default)]
         public string? InstallLocation { get; set; }
@@ -21,9 +22,11 @@ namespace Lambda.Models
 
         [JsonProperty("name", Required = Required.Always)]
         public string Name { get; set; }
-        #endregion
+
+        #endregion Basic
 
         #region Additionals
+
         [JsonProperty("closedCommands", Required = Required.Default)]
         public List<CommandModel>? ClosedCommands { get; set; }
 
@@ -68,10 +71,18 @@ namespace Lambda.Models
 
         [JsonProperty("prepareCommands", Required = Required.Default)]
         public List<CommandModel>? PrepareCommands { get; set; }
-        #endregion
+
+        #endregion Additionals
 
         #region JSON Constructor
-        public GameModel() { }
-        #endregion
+
+#pragma warning disable CS8618
+
+        public GameModel() {
+        }
+
+#pragma warning restore CS8618
+
+        #endregion JSON Constructor
     }
 }

@@ -3,11 +3,13 @@ using SharpRambo.ExtensionsLib;
 using System.ComponentModel;
 using System.Diagnostics;
 
-namespace Lambda.Models
-{
+namespace Lambda.Models {
+
     [JsonObject(MemberSerialization.OptIn)]
-    public class CommandModel
-    {
+    public class CommandModel {
+
+        #region Basic
+
         [JsonProperty("arguments", Required = Required.Always)]
         public List<string> Arguments { get; set; } = [];
 
@@ -31,15 +33,30 @@ namespace Lambda.Models
         [DefaultValue(ProcessWindowStyle.Normal)]
         public ProcessWindowStyle WindowStyle { get; set; } = ProcessWindowStyle.Normal;
 
-        public CommandModel(string commandline) : this(commandline, new List<string>()) { }
-        public CommandModel(string commandline, IEnumerable<string> arguments)
-        {
+        #endregion Basic
+
+        #region Constructor
+
+        /// <summary>
+        /// JSON Constructor
+        /// </summary>
+        public CommandModel() {
+        }
+
+        public CommandModel(string commandline) : this(commandline, new List<string>()) {
+        }
+
+        public CommandModel(string commandline, IEnumerable<string> arguments) {
             if (commandline.IsNull())
                 throw new ArgumentNullException(nameof(commandline));
 
             Arguments = arguments.ToList();
             CommandLine = commandline;
         }
+
+        #endregion Constructor
+
+        #region Converters
 
         public async Task<ProcessStartInfo> ToProcessStartInfo() {
             ProcessStartInfo psi = new() {
@@ -57,8 +74,6 @@ namespace Lambda.Models
             return psi;
         }
 
-        #region JsonConstructor
-        public CommandModel() { }
-        #endregion
+        #endregion Converters
     }
 }
