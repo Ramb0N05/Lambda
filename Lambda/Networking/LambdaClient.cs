@@ -25,8 +25,10 @@ namespace Lambda.Networking {
         #endregion Public Events
 
         #region Public Properties
+
         public IPAddress Address { get; }
         public ushort Port { get; }
+
         #endregion Public Properties
 
         #region Public Constructors

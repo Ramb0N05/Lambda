@@ -3,8 +3,10 @@ using Newtonsoft.Json;
 using System.ComponentModel;
 
 namespace Lambda.Configuration {
+
     [JsonObject(MemberSerialization.OptIn)]
     public class GameConfiguration : Configuration {
+
         [JsonProperty("games", Required = Required.AllowNull)]
         public BindingList<GameModel>? Games { get; set; }
 

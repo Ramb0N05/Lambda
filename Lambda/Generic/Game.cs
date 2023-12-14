@@ -1,4 +1,5 @@
 ﻿using Lambda.Events;
+using Lambda.Generic.Enumerations;
 using Lambda.Models;
 using Newtonsoft.Json;
 using SharpRambo.ExtensionsLib;
@@ -7,53 +8,29 @@ using System.Net;
 
 namespace Lambda.Generic {
 
-    public enum ValidationResult {
-        Indeterminable = -2,
-        Invalid = -1,
-        Unknown = 0,
-        Valid = 1
-    }
-
-    public class FileValidation(FileInfo file, ValidationResult result) {
-        public FileInfo File { get; } = file;
-        public ValidationResult Result { get; } = result;
-    }
-
-    [JsonObject(MemberSerialization.OptIn)]
-    public sealed class ValidationFile : IEquatable<ValidationFile> {
-        public static ValidationFile Empty { get; } = new();
-        public static ValidationFile Error { get; } = new() { Filename = "<ERR>", Hash = "<ERR>" };
-
-        public FileInfo? File { get; }
-
-        [JsonProperty("path", Required = Required.Always)]
-        public string Filename { get; set; } = string.Empty;
-
-        [JsonProperty("hash", Required = Required.Always)]
-        public string Hash { get; set; } = string.Empty;
-
-        public bool Equals(ValidationFile? obj)
-            => obj != null && File == obj.File && Filename == obj.Filename && Hash == obj.Hash;
-
-        public override bool Equals(object? obj)
-            => Equals(obj as ValidationFile);
-
-        public override int GetHashCode()
-            => new int[File?.GetHashCode() ?? 0.GetHashCode(), Filename.GetHashCode(), Hash.GetHashCode()].GetHashCode();
-    }
-
     public class Game : GameModel {
+
+        #region Constants
+
         public const string DEFAULT_VALIDATION_FILE = "_validate.lambda";
+
+        #endregion Constants
+
+        #region Public Events
 
         public static event EventHandler<FileProgressChangedEventArgs>? OnCreateHashesProgressChanged;
 
         public event EventHandler<FileProgressChangedEventArgs>? OnValidationProgressChanged;
 
-        #region Properties
-        public IPEndPoint? RemoteLocation { get; }
-        #endregion Properties
+        #endregion Public Events
 
-        #region Construct
+        #region Public Properties
+
+        public IPEndPoint? RemoteLocation { get; }
+
+        #endregion Public Properties
+
+        #region Public Constructors
 
         public Game(string identifier, string name, string location) {
             Identifier = identifier;
@@ -64,9 +41,9 @@ namespace Lambda.Generic {
                 throw new DirectoryNotFoundException("Directory '" + Location + "' could not be located!");
         }
 
-        #endregion Construct
+        #endregion Public Constructors
 
-        #region Methods
+        #region Private Methods
 
         private static async Task createHashes(DirectoryInfo location) {
             FileInfo hashFile = new(Path.Combine(location.FullName, DEFAULT_VALIDATION_FILE));
@@ -119,6 +96,9 @@ namespace Lambda.Generic {
                 await Task.CompletedTask;
             });
 
+        private bool checkLocation()
+            => !Location.IsNull() && Directory.Exists(Path.GetFullPath(Location));
+
         private async Task<List<FileValidation>> validate(FileInfo hashFile) {
             List<FileValidation> fileValidationList = [];
             DirectoryInfo dir = new(Path.GetFullPath(Location));
@@ -151,8 +131,34 @@ namespace Lambda.Generic {
             return fileValidationList;
         }
 
-        private bool checkLocation()
-            => !Location.IsNull() && Directory.Exists(Path.GetFullPath(Location));
+        #endregion Private Methods
+
+        #region Public Methods
+
+        public static Game FromModel(GameModel model)
+            => new(model.Identifier, model.Name, model.Location) {
+                Description = model.Description,
+                ExecuteCommands = model.ExecuteCommands,
+                FirstStartCommands = model.FirstStartCommands,
+                Genres = model.Genres,
+                ImagePath = model.ImagePath,
+                InstallerCommands = model.InstallerCommands,
+                IsExecuted = model.IsExecuted,
+                IsPrepared = model.IsPrepared,
+                IsPublic = model.IsPublic,
+                IsRemote = model.IsRemote,
+                IsStandalone = model.IsStandalone,
+                PrepareCommands = model.PrepareCommands
+            };
+
+        public static async Task<Game> Import(string identifier, string name, string location) {
+            DirectoryInfo dir = new(Path.GetFullPath(location));
+
+            if (dir.Exists)
+                await createHashes(dir);
+
+            return new(identifier, name, location);
+        }
 
         public async Task Execute(Action<Process> callback) {
             string dir = !IsStandalone && !InstallLocation.IsNull() ? InstallLocation : Location;
@@ -162,15 +168,6 @@ namespace Lambda.Generic {
 
             if (ClosedCommands != null)
                 await executeCommands(ClosedCommands, dir, callback);
-        }
-
-        public static async Task<Game> Import(string identifier, string name, string location) {
-            DirectoryInfo dir = new(Path.GetFullPath(location));
-
-            if (dir.Exists)
-                await createHashes(dir);
-
-            return new(identifier, name, location);
         }
 
         public async Task<bool> Fetch() {
@@ -195,22 +192,6 @@ namespace Lambda.Generic {
             return hashFile.Exists ? await validate(hashFile) : [];
         }
 
-        public static Game FromModel(GameModel model)
-            => new(model.Identifier, model.Name, model.Location) {
-                Description = model.Description,
-                ExecuteCommands = model.ExecuteCommands,
-                FirstStartCommands = model.FirstStartCommands,
-                Genres = model.Genres,
-                ImagePath = model.ImagePath,
-                InstallerCommands = model.InstallerCommands,
-                IsExecuted = model.IsExecuted,
-                IsPrepared = model.IsPrepared,
-                IsPublic = model.IsPublic,
-                IsRemote = model.IsRemote,
-                IsStandalone = model.IsStandalone,
-                PrepareCommands = model.PrepareCommands
-            };
-
-        #endregion Methods
+        #endregion Public Methods
     }
 }

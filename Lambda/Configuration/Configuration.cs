@@ -1,7 +1,9 @@
 ﻿using Newtonsoft.Json;
 
 namespace Lambda.Configuration {
-    abstract public class Configuration : IConfiguration {
+
+    public abstract class Configuration : IConfiguration {
+
         public virtual async Task<bool> Save(string filePath, JsonSerializerSettings? jss = null) {
             try {
                 string json = JsonConvert.SerializeObject(this, jss);

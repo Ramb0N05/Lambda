@@ -382,7 +382,7 @@
             Name = "SettingsView";
             Size = new Size(759, 305);
             Title = "Settings";
-            Load += SettingsView_Load;
+            Load += settingsView_Load;
             tlp_menu.ResumeLayout(false);
             tlp_main.ResumeLayout(false);
             tlp_main.PerformLayout();

@@ -1,18 +1,23 @@
-﻿using System;
-namespace Lambda.Views
-{
+﻿using Lambda.Views.Events;
+
+namespace Lambda.Views {
+
     public partial class InputBoxView : View {
-        public class ExtraButtonClickEventArgs(InputBoxView inputBoxView) : EventArgs {
-            public InputBoxView InputBoxView { get; } = inputBoxView;
-        }
 
-        public delegate void DataReadyHandler(object sender, EventArgs e);
-        public EventHandler<EventArgs> DataReady;
+        #region Public Fields
 
-        public delegate void ExtraButtonClickHandler(object sender, ExtraButtonClickEventArgs e);
-        public EventHandler<ExtraButtonClickEventArgs>? ExtraButtonClick;
+        public event EventHandler<EventArgs> DataReady;
+        public event EventHandler<ExtraButtonClickEventArgs>? ExtraButtonClick;
+
+        #endregion Public Fields
+
+        #region Public Properties
 
         public string? UserInput { get; private set; }
+
+        #endregion Public Properties
+
+        #region Public Constructors
 
         public InputBoxView(string title, string message, bool showExtraButton = false) {
             InitializeComponent();
@@ -34,15 +39,25 @@ namespace Lambda.Views
 
             InitializeView();
 
-            DataReady += DataReady_EventHandler;
+            DataReady += dataReady_EventHandler;
             ExtraButton.Click += (sender, e) => ExtraButtonClick?.Invoke(sender, new ExtraButtonClickEventArgs(this));
             ViewClosed += (sender, e) => DataReady?.Invoke(sender, e);
         }
 
+        #endregion Public Constructors
+
+        #region Public Methods
+
         public void UpdateUserInput(string input)
             => tb_input.Text = input;
 
-        private void DataReady_EventHandler(object? sender, EventArgs e)
+        #endregion Public Methods
+
+        #region Private Methods
+
+        private void dataReady_EventHandler(object? sender, EventArgs e)
             => UserInput = tb_input.Text;
+
+        #endregion Private Methods
     }
 }

@@ -19,9 +19,6 @@ dotnet_style_namespace_match_folder = true:suggestion
 end_of_line = crlf
 
 [*.cs]
-
-# S3604: Member initializer values should not be redundant
-dotnet_diagnostic.S3604.severity = none
 csharp_space_around_binary_operators = before_and_after
 csharp_indent_labels = one_less_than_current
 csharp_style_expression_bodied_methods = true:suggestion
@@ -36,6 +33,10 @@ csharp_style_throw_expression = true:suggestion
 csharp_style_prefer_null_check_over_type_check = true:suggestion
 csharp_prefer_simple_default_expression = true:suggestion
 csharp_style_prefer_local_over_anonymous_function = true:suggestion
+# S3604: Member initializer values should not be redundant
+dotnet_diagnostic.S3604.severity = none
+# S4136: Method overloads should be grouped together
+dotnet_diagnostic.S4136.severity = warning
 vsspell_section_id = 8e21c4ce3d8b4366a7067264d8407bc2
 vsspell_dictionary_languages_8e21c4ce3d8b4366a7067264d8407bc2 = en-US,de-DE
 
@@ -123,5 +124,8 @@ dotnet_naming_style.beginnt_mit_underline.required_suffix =
 dotnet_naming_style.beginnt_mit_underline.word_separator = 
 dotnet_naming_style.beginnt_mit_underline.capitalization = camel_case
 
-# S4136: Method overloads should be grouped together
-dotnet_diagnostic.S4136.severity = warning
+# RCS1036: Remove unnecessary blank line
+dotnet_diagnostic.RCS1036.severity = silent
+
+# RCS1003: Add braces to if-else (when expression spans over multiple lines)
+dotnet_diagnostic.RCS1003.severity = silent

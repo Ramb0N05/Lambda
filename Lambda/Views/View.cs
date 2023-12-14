@@ -1,12 +1,11 @@
 ﻿using System.ComponentModel;
 
-namespace Lambda.Views
-{
-    public class AViewDescriptionProvider<TAbstract, TBase> : TypeDescriptionProvider
-    {
+namespace Lambda.Views {
+
+    public class AViewDescriptionProvider<TAbstract, TBase> : TypeDescriptionProvider {
+
         public AViewDescriptionProvider()
-            : base(TypeDescriptor.GetProvider(typeof(TAbstract)))
-        {
+            : base(TypeDescriptor.GetProvider(typeof(TAbstract))) {
         }
 
         public override Type GetReflectionType(Type objectType, object? instance)
@@ -14,8 +13,7 @@ namespace Lambda.Views
                 ? typeof(TBase)
                 : base.GetReflectionType(objectType, instance);
 
-        public override object? CreateInstance(IServiceProvider? provider, Type objectType, Type[]? argTypes, object?[]? args)
-        {
+        public override object? CreateInstance(IServiceProvider? provider, Type objectType, Type[]? argTypes, object?[]? args) {
             if (objectType == typeof(TAbstract))
                 objectType = typeof(TBase);
 
@@ -23,7 +21,8 @@ namespace Lambda.Views
         }
     }
 
-    public class View_DesignTime : UserControl {
+    public class ViewDesignTime : UserControl {
+
         [Browsable(true), EditorBrowsable(EditorBrowsableState.Always), Bindable(true)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
         public Button? AcceptButton { get; set; }
@@ -53,19 +52,23 @@ namespace Lambda.Views
         public FormWindowState WindowState { get; set; } = FormWindowState.Normal;
     }
 
-    [TypeDescriptionProvider(typeof(AViewDescriptionProvider<View, View_DesignTime>))]
-    public abstract class View : UserControl, IView
-    {
+    [TypeDescriptionProvider(typeof(AViewDescriptionProvider<View, ViewDesignTime>))]
+    public abstract class View : UserControl, IView {
+
         public delegate void AcceptButtonClickHandler(object sender, EventArgs e);
-        public EventHandler<EventArgs>? AcceptButtonClick;
+
+        public event EventHandler<EventArgs>? AcceptButtonClick;
 
         public delegate void CancelButtonClickHandler(object sender, EventArgs e);
-        public EventHandler<EventArgs>? CancelButtonClick;
+
+        public event EventHandler<EventArgs>? CancelButtonClick;
 
         public delegate void ViewClosingHandler(object sender, EventArgs e);
+
         public event EventHandler<EventArgs>? ViewClosing;
 
         public delegate void ViewClosedHandler(object sender, EventArgs e);
+
         public event EventHandler<EventArgs>? ViewClosed;
 
         public const string TITLE_UNDEFINED = "<view.title.undefined>";
@@ -82,15 +85,15 @@ namespace Lambda.Views
         public FormWindowState WindowState { get; set; } = FormWindowState.Normal;
 
         public void InitializeView() {
-            AcceptButtonClick += AcceptButtonClick_EventHandler;
-            CancelButtonClick += CancelButtonClick_EventHandler;
-            ViewClosing += ViewClosing_EventHandler;
-            ViewClosed += ViewClosed_EventHandler;
+            AcceptButtonClick += acceptButtonClick_EventHandler;
+            CancelButtonClick += cancelButtonClick_EventHandler;
+            ViewClosing += viewClosing_EventHandler;
+            ViewClosed += viewClosed_EventHandler;
             ViewForm = createForm();
         }
 
         private Form createForm() {
-            ViewForm =  new() {
+            ViewForm = new() {
                 AutoSize = AutoSize,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 FormBorderStyle = FormBorderStyle,
@@ -114,21 +117,21 @@ namespace Lambda.Views
             return ViewForm;
         }
 
-        private void AcceptButtonClick_EventHandler(object? sender, EventArgs e) {
+        private void acceptButtonClick_EventHandler(object? sender, EventArgs e) {
             DialogResult = DialogResult.OK;
             Close();
         }
 
-        private void CancelButtonClick_EventHandler(object? sender, EventArgs e) {
+        private void cancelButtonClick_EventHandler(object? sender, EventArgs e) {
             DialogResult = DialogResult.Cancel;
             Close();
         }
 
-        private void ViewClosed_EventHandler(object? sender, EventArgs e) {
-
+        private void viewClosed_EventHandler(object? sender, EventArgs e) {
+            //TODO
         }
 
-        private void ViewClosing_EventHandler(object? sender, EventArgs e) {
+        private void viewClosing_EventHandler(object? sender, EventArgs e) {
             if (ViewForm is not null)
                 ViewForm.DialogResult = DialogResult;
         }
@@ -139,10 +142,12 @@ namespace Lambda.Views
             ViewClosed?.Invoke(this, EventArgs.Empty);
         }
 
-        public new virtual void Show() => Show(null);
+        public virtual new void Show() => Show(null);
+
         public virtual void Show(IWin32Window? owner) => ViewForm?.Show(owner);
 
         public virtual DialogResult ShowDialog() => ShowDialog(null);
+
         public virtual DialogResult ShowDialog(IWin32Window? owner) => ViewForm?.ShowDialog(owner) ?? DialogResult.None;
     }
 }

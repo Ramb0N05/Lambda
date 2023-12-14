@@ -2,7 +2,9 @@
 using System.ComponentModel;
 
 namespace Lambda.Configuration {
+
     public class GeneralConfiguration : Configuration {
+
         [JsonProperty("advertiseNewGames", Required = Required.DisallowNull)]
         [DefaultValue(true)]
         public bool AdvertiseNewGames { get; set; } = true;

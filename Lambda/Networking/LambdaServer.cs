@@ -5,23 +5,43 @@ using DotNetty.Transport.Channels.Sockets;
 using Lambda.Networking.Events;
 using System.Net;
 
-namespace Lambda.Networking
-{
+namespace Lambda.Networking {
+
     public class LambdaServer {
+
+        #region Private Fields
+
         private readonly ServerBootstrap _bootstrap = new();
+        private readonly MultithreadEventLoopGroup _bossGroup = new(1);
+        private readonly MultithreadEventLoopGroup _workerGroup = new();
         private IChannel? _bootstrapChannel;
-        private readonly MultithreadEventLoopGroup _bossGroup = new(1);  // accepts an incoming connection
-        private readonly MultithreadEventLoopGroup _workerGroup = new(); // handles the traffic of the accepted connection once the boss accepts the connection and registers the accepted connection to the worker
+
+        #endregion Private Fields
+
+        #region Public Events
 
         public event EventHandler<EventArgs>? OnChannelClosed;
+
         public event EventHandler<EventArgs>? OnClientDisconnected;
+
         public event EventHandler<ExceptionCaughtEventArgs>? OnExceptionCaught;
+
         public event EventHandler<MessageReceivedEventArgs>? OnMessageReceived;
+
+        #endregion Public Events
+
+        #region Public Properties
 
         public IPAddress? IP { get; }
         public ushort Port { get; }
 
-        public LambdaServer(ushort port) : this(null, port) { }
+        #endregion Public Properties
+
+        #region Public Constructors
+
+        public LambdaServer(ushort port) : this(null, port) {
+        }
+
         public LambdaServer(IPAddress? ip, ushort port) {
             if (port == 0)
                 throw new ArgumentOutOfRangeException(nameof(port), port, "Port must be greater than zero!");
@@ -50,24 +70,30 @@ namespace Lambda.Networking
                         pipeline.AddLast(encoder, decoder, serverHandler);
                     }));
             } catch {
-
+                //TODO
             }
         }
 
-        public async Task Listen()
-            => _bootstrapChannel = IP != null ? await _bootstrap.BindAsync(IP, Port) : await _bootstrap.BindAsync(Port);
+        #endregion Public Constructors
+
+        #region Public Methods
 
         public async Task Close() {
             if (_bootstrapChannel != null)
-            await _bootstrapChannel.CloseAsync();
+                await _bootstrapChannel.CloseAsync();
 
             await _bossGroup.ShutdownGracefullyAsync();
             await _workerGroup.ShutdownGracefullyAsync();
         }
 
+        public async Task Listen()
+                    => _bootstrapChannel = IP != null ? await _bootstrap.BindAsync(IP, Port) : await _bootstrap.BindAsync(Port);
+
         public async Task Write(LambdaMessage message) {
             if (_bootstrapChannel != null)
                 await _bootstrapChannel.WriteAndFlushAsync(message);
         }
+
+        #endregion Public Methods
     }
 }
